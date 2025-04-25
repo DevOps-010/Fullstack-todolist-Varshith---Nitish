@@ -11,18 +11,32 @@ app.use(express.json());
 
 // MongoDB connection with retry logic
 const connectWithRetry = () => {
-  mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/todoapp', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+  console.log('Attempting to connect to MongoDB...');
+  mongoose.connect(process.env.MONGODB_URI || 'mongodb://mongo:27017/todoapp')
+  .then(() => {
+    console.log('Successfully connected to MongoDB');
   })
-  .then(() => console.log('Connected to MongoDB'))
   .catch(err => {
-    console.error('MongoDB connection error:', err);
+    console.error('MongoDB connection error:', err.message);
     console.log('Retrying connection in 5 seconds...');
     setTimeout(connectWithRetry, 5000);
   });
 };
 
+// Handle MongoDB connection events
+mongoose.connection.on('error', err => {
+  console.error('MongoDB connection error:', err.message);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
+
+mongoose.connection.on('connected', () => {
+  console.log('MongoDB connected');
+});
+
+// Start the connection
 connectWithRetry();
 
 // Todo Schema
